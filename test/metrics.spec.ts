@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { beforeEach } from '@jest/globals'
+import type { MongoClientOptions } from 'mongodb'
 import { MongoClient } from 'mongodb'
 import { Gauge, Histogram, type Registry } from 'prom-client'
 
@@ -18,8 +18,9 @@ jest.mock('prom-client', () => ({
 
 describe('all metrics are created with the correct parameters', () => {
   const options = { defaultLabels: { foo: 'bar', alice: 2 } }
-  const mongoClient = new MongoClient('mongodb://localhost:27017', { monitorCommands: true })
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- MongoClientOptions extends Node.js TLS types that gained required properties in Node.js 24
+  const mongoClient = new MongoClient('mongodb://localhost:27017', { monitorCommands: true } as unknown as MongoClientOptions)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- minimal mock object cast to Registry for testing constructor behavior
   const register: Registry = {} as Registry
 
   beforeEach(() => {
@@ -28,7 +29,7 @@ describe('all metrics are created with the correct parameters', () => {
   })
 
   test('all metrics are created', () => {
-    // eslint-disable-next-line no-new
+    // eslint-disable-next-line no-new -- constructing MongoDBDriverExporter to test its side effects on the registry
     new MongoDBDriverExporter(mongoClient, register)
 
     expect(Gauge).toHaveBeenCalledTimes(5)
@@ -87,7 +88,7 @@ describe('all metrics are created with the correct parameters', () => {
   })
 
   test('all metrics are created with default labels', () => {
-    // eslint-disable-next-line no-new
+    // eslint-disable-next-line no-new -- constructing MongoDBDriverExporter to test its side effects on the registry
     new MongoDBDriverExporter(mongoClient, register, options)
 
     expect(Gauge).toHaveBeenCalledTimes(5)
@@ -146,7 +147,7 @@ describe('all metrics are created with the correct parameters', () => {
   })
 
   test('all metrics include the name prefix.', () => {
-    // eslint-disable-next-line no-new
+    // eslint-disable-next-line no-new -- constructing MongoDBDriverExporter with prefix option to test metric name side effects on the registry
     new MongoDBDriverExporter(mongoClient, register, { prefix: 'test_' })
 
     expect(Gauge).toHaveBeenCalledTimes(5)

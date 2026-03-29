@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import type { MongoClientOptions } from 'mongodb'
 import { MongoClient } from 'mongodb'
 import { Registry } from 'prom-client'
 
@@ -13,7 +14,9 @@ describe('tests monitorMongoDBDriver', () => {
   let register: Registry
 
   beforeEach(() => {
-    mongoClient = new MongoClient('mongodb://localhost:27017', { monitorCommands: true })
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- MongoClientOptions extends Node.js TLS types that gained required properties in Node.js 24
+    const mongoClientOptions = { monitorCommands: true } as unknown as MongoClientOptions
+    mongoClient = new MongoClient('mongodb://localhost:27017', mongoClientOptions)
     register = new Registry()
     mockMongoDBDriverExporter.mockClear()
   })
@@ -36,9 +39,9 @@ describe('tests monitorMongoDBDriver', () => {
 
   test('monitorMongoDBDriver calls methods of MongoDBDriverExporter instance', () => {
     monitorMongoDBDriver(mongoClient, register)
-    // eslint-disable-next-line @typescript-eslint/prefer-destructuring
+    // eslint-disable-next-line @typescript-eslint/prefer-destructuring -- index access is clearer when referencing a specific mock instance by position
     const mockMongoDBDriverExporterInstance = mockMongoDBDriverExporter.mock.instances[0]
-    // eslint-disable-next-line jest/unbound-method, @typescript-eslint/no-unsafe-type-assertion
+    // eslint-disable-next-line jest/unbound-method, @typescript-eslint/no-unsafe-type-assertion -- accessing jest mock on instance method requires cast
     const mockEnableMetrics = mockMongoDBDriverExporterInstance.enableMetrics as jest.Mock
     expect(mockEnableMetrics).toHaveBeenCalledTimes(1)
   })
